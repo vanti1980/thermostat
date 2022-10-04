@@ -39,7 +39,7 @@ const COLL_SCHEDULE = 'schedule';
  const createId = async (req, res) => {
   // create new auth ID
   console.log(req.body);
-  await db.collection(COLL_ID).set(req.body, true);
+  await db.collection(COLL_ID).set(req.body, {});
 
   res.status(201).end();
 };
