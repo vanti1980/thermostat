@@ -63,6 +63,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
+        400:
+          description: Invalid ID
+        404:
+          description: No status found
   '/statuses':
     get:
       tags:
@@ -213,7 +217,6 @@ components:
           description: Current temperature
           required: true
     Status:
-      type: object
       properties:
         temp:
           type: number
@@ -225,8 +228,6 @@ components:
           format: date-time
           description: Current timestamp from the server perspective
           required: true
-        schedule:
-          $ref: '#/components/schemas/Schedule'
     ScheduleRequest:
       type: object
       properties:
@@ -236,24 +237,6 @@ components:
         to:
           type: string
           format: date-time
-        recurring:
-          $ref: '#/components/schemas/Recurring'
-    Schedule:
-      type: object
-      properties:
-        id:
-          type: string
-          required: true
-        from:
-          type: string
-          format: date-time
-        to:
-          type: string
-          format: date-time
-        priority:
-          type: integer
-          format: int32
-          description: The rule priority of rule to process (the higher the most precedence)
         set:
           type: number
           format: float
@@ -261,6 +244,18 @@ components:
           required: true
         recurring:
           $ref: '#/components/schemas/Recurring'
+    Schedule:
+      allOf:
+      - $ref: '#/components/schemas/ScheduleRequest'
+      - type: object
+        properties:
+          id:
+            type: string
+            required: true
+          priority:
+            type: integer
+            format: int32
+            description: The rule priority of rule to process (the higher the most precedence)
     Recurring:
       type: object
       properties:
@@ -283,9 +278,7 @@ components:
             format: int32
         from:
           type: string
-          format: date-time
-          description: Apply from timestamp (only time part is taken into consideration)
+          description: HHmm
         to:
           type: string
-          format: date-time
-          description: Apply from timestamp (only time part is taken into consideration)
+          description: HHmm

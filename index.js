@@ -1,4 +1,4 @@
-import { CyclicDb as db } from 'cyclic-dynamodb';
+import db from 'cyclic-dynamodb';
 import {
   differenceInCalendarDays,
   differenceInCalendarMonths,
@@ -13,7 +13,11 @@ import {
   set
 } from 'date-fns';
 import express from 'express';
+import { v4 as uuid } from 'uuid';
+
 const app = express();
+
+const MAX_LOOK_BEHIND = 30;
 
 const COLL_ID = 'id';
 // key: <ID>_YYYYMMDD, value: [{"1005":21.5,"1010":21.75}]
@@ -31,6 +35,54 @@ const COLL_STATUS = 'status';
 const COLL_SCHEDULE = 'schedule';
 
 /**
+ * Returns status key latter part as properties settable with date-fns.
+ * @param {string} key <ID>_yyyyMMdd
+ * @returns {object}
+ */
+const getStatusKeyDateSetProps = (key) => {
+  const parts = key.split('_');
+  if (parts.length < 2) {
+    console.warn(`Invalid status key ${key}!`);
+    return {};
+  }
+  return {
+    year: parts[parts.length - 1].substring(0, 4),
+    month: parts[parts.length - 1].substring(4, 6),
+    date: parts[parts.length - 1].substring(6, 8)
+  };
+};
+
+/**
+ * Returns status value key as properties settable with date-fns.
+ * @param {string} key HHmm
+ * @returns {object}
+ */
+const getStatusValueKeyTimeSetProps = (key) => ({
+  hours: key.substring(0, 2),
+  minutes: key.substring(2, 4),
+  seconds: 0,
+  milliseconds: 0
+});
+
+/**
+ *
+ * @param {CyclicItem} item
+ * @returns {Status[]}
+ */
+const getStatusesFromItem = (item) =>
+  Object.entries(item.props)
+    .filter(([key]) => /\d{4}/.test(key))
+    .map(([key, value]) => ({
+      temp: value,
+      ts: formatISO(
+        set(new Date(), {
+          ...getStatusKeyDateSetProps(item.key),
+          ...getStatusValueKeyTimeSetProps(key)
+        })
+      )
+    }));
+
+/**
  * Handles when a new ID is created.
  *
  * @param {Request} req
@@ -38,11 +90,59 @@ const COLL_SCHEDULE = 'schedule';
  */
 const createId = async (req, res) => {
   // create new auth ID
-  console.log(req.body);
   await db.collection(COLL_ID).set(req.body, {});
 
   res.status(201).end();
 };
+
+/**
+ * Returns latest status.
+ *
+ * @param {Request} req
+ * @param {Response} res
+ */
+const getStatus = async (req, res) =>
+  withValidId(req, res, async (req, res, id) => {
+    const now = new Date();
+    const statusColl = db.collection(COLL_STATUS);
+    let statusItem = undefined;
+    do {
+      const latestDate = new Date();
+      const key = `${id}_${format(latestDate, 'yyyyMMdd')}`;
+      statusItem = await statusColl.get(key);
+    } while (!statusItem && iterations < MAX_LOOK_BEHIND);
+
+    if (statusItem) {
+      const latestStatus = getStatusesFromItem(statusItem).pop();
+      if (latestStatus) {
+        res.json(latestStatus).end();
+      } else {
+        res.status(404).end();
+      }
+    } else {
+      res.status(404).end();
+    }
+  });
+
+/**
+ * Returns all statuses.
+ *
+ * @param {Request} req
+ * @param {Response} res
+ */
+const getStatuses = async (req, res) =>
+  withValidId(req, res, async (req, res, id) => {
+    const briefStatusItems = await db.collection(COLL_STATUS).list();
+    const statusItems = await Promise.all(
+      briefStatusItems.results
+        .filter((item) => item.key.startsWith(`${id}_`))
+        .map((item) => db.collection(COLL_STATUS).get(item.key))
+    );
+    const statuses = statusItems
+      .map((item) => getStatusesFromItem(item))
+      .flat();
+    res.json(statuses).end();
+  });
 
 /**
  * Handles when thermostat send a status.
@@ -55,11 +155,7 @@ const postStatus = async (req, res) =>
     const now = new Date();
     const key = `${id}_${format(now, 'yyyyMMdd')}`;
     const statusColl = db.collection(COLL_STATUS);
-    const item = await statusColl.get(key);
-    let props = item.props;
-    if (!props) {
-      props = {};
-    }
+    const props = {};
     props[format(now, 'HHmm')] = req.body.temp;
     await statusColl.set(key, props);
     const schedule = getEffectiveSchedule(id);
@@ -79,12 +175,44 @@ const postStatus = async (req, res) =>
  * @param {Response} res
  */
 const getSchedules = async (req, res) =>
-  withValidId(req, res, (req, res, id) => {
-    res.json(getActiveSchedules(id)).end();
+  withValidId(req, res, async (req, res, id) => {
+    const schedules = await getActiveSchedules(id);
+    res.json(schedules).end();
   });
 
+const postSchedules = async (req, res) =>
+  withValidId(req, res, async (req, res, id) => {
+    // key: <ID>_<UUID>, value: {"from":"2022-10-03T10:00:00Z","priority":1,"set":19,"rUnit":"w","rDays":[0,1,2,3,4],"rFrom":"0700","rTo":"1700"} -> for recurring setting
+    const key = `${id}_${uuid()}`;
+    const priority =
+      (await db.collection(COLL_SCHEDULE).list()).results.length + 1;
+    await db.collection(COLL_SCHEDULE).set(key, {
+      from: req.body.from,
+      to: req.body.to,
+      priority: req.body.priority,
+      set: req.body.set,
+      rUnit: req.body.recurring?.unit,
+      rCount: req.body.recurring?.count,
+      rDays: req.body.recurring?.days,
+      rFrom: req.body.recurring?.from,
+      rTo: req.body.recurring?.to
+    });
+    res
+      .json({
+        ...req.body,
+        id: key,
+        priority
+      })
+      .end();
+  });
+
+/**
+ *
+ * @param {string} id
+ * @returns {Promise<Schedule | undefined>}
+ */
 const getEffectiveSchedule = async (id) => {
-  const schedules = getActiveSchedules(id);
+  const schedules = await getActiveSchedules(id);
   return schedules.pop();
 };
 
@@ -96,13 +224,16 @@ const getEffectiveSchedule = async (id) => {
  */
 const getActiveSchedules = async (id) => {
   // TODO solve with filter
-  const scheduleItems = await db.collection(COLL_SCHEDULE).list();
-  const schedules = scheduleItems.results.filter((item) =>
+  const briefScheduleItems = await db.collection(COLL_SCHEDULE).list();
+  const briefSchedules = briefScheduleItems.results.filter((item) =>
     item.key.startsWith(`${id}_`)
+  );
+  const schedules = await Promise.all(
+    briefSchedules.map((sch) => db.collection(COLL_SCHEDULE).get(sch.key))
   );
   schedules.sort((a, b) => a.props.priority - b.props.priority);
   const now = new Date();
-  return schedules.results
+  return (schedules.results || [])
     .map((schedule) => ({ id: schedule.id, ...schedule.props }))
     .filter(
       (props) =>
@@ -246,8 +377,11 @@ app.use(express.static('public', options));
 // #############################################################################
 
 app.post('/id', createId);
+app.get('/status', getStatus);
 app.post('/status', postStatus);
+app.get('/statuses', getStatuses);
 app.get('/schedules', getSchedules);
+app.post('/schedules', postSchedules);
 
 /*
 // Delete an item
