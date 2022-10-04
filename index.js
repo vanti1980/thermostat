@@ -30,86 +30,13 @@ const COLL_STATUS = 'status';
 // key: <ID>_<UUID>, value: {"from":"2022-10-03T10:00:00Z","to":"2022-10-03T16:00:00Z","priority":10,"set":21} -> for one-time setting
 const COLL_SCHEDULE = 'schedule';
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// #############################################################################
-// This configures static hosting for files in /public that have the extensions
-// listed in the array.
-const options = {
-  dotfiles: 'ignore',
-  etag: false,
-  extensions: ['htm', 'html', 'css', 'js', 'ico', 'jpg', 'jpeg', 'png', 'svg'],
-  index: ['index.html'],
-  maxAge: '1m',
-  redirect: false
-};
-app.use(express.static('public', options));
-// #############################################################################
-
-app.post('/id', createId);
-app.post('/status', postStatus);
-app.get('/schedules', getSchedules);
-
-/*
-// Delete an item
-app.delete('/:col/:key', async (req, res) => {
-  const col = req.params.col;
-  const key = req.params.key;
-  console.log(
-    `from collection: ${col} delete key: ${key} with params ${JSON.stringify(
-      req.params
-    )}`
-  );
-  const item = await db.collection(col).delete(key);
-  console.log(JSON.stringify(item, null, 2));
-  res.json(item).end();
-});
-
-// Get a single item
-app.get('/:col/:key', async (req, res) => {
-  const col = req.params.col;
-  const key = req.params.key;
-  console.log(
-    `from collection: ${col} get key: ${key} with params ${JSON.stringify(
-      req.params
-    )}`
-  );
-  const item = await db.collection(col).get(key);
-  console.log(JSON.stringify(item, null, 2));
-  res.json(item).end();
-});
-
-// Get a full listing
-app.get('/:col', async (req, res) => {
-  const col = req.params.col;
-  console.log(
-    `list collection: ${col} with params: ${JSON.stringify(req.params)}`
-  );
-  const items = await db.collection(col).list();
-  console.log(JSON.stringify(items, null, 2));
-  res.json(items).end();
-});
-*/
-
-// Catch all handler for all other request.
-app.use('*', (req, res) => {
-  res.json({ msg: 'no route handler found' }).end();
-});
-
-// Start the server
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`index.js listening on ${port}`);
-});
-
 /**
  * Handles when a new ID is created.
  *
  * @param {Request} req
  * @param {Response} res
  */
-const createId = async (req, res) => {
+ const createId = async (req, res) => {
   // create new auth ID
   await db.collection(COLL_ID).set(req.body, true);
 
@@ -298,3 +225,78 @@ const withValidId = async (req, res, cbValid) => {
     res.status(400).end();
   }
 };
+
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// #############################################################################
+// This configures static hosting for files in /public that have the extensions
+// listed in the array.
+const options = {
+  dotfiles: 'ignore',
+  etag: false,
+  extensions: ['htm', 'html', 'css', 'js', 'ico', 'jpg', 'jpeg', 'png', 'svg'],
+  index: ['index.html'],
+  maxAge: '1m',
+  redirect: false
+};
+app.use(express.static('public', options));
+// #############################################################################
+
+app.post('/id', createId);
+app.post('/status', postStatus);
+app.get('/schedules', getSchedules);
+
+/*
+// Delete an item
+app.delete('/:col/:key', async (req, res) => {
+  const col = req.params.col;
+  const key = req.params.key;
+  console.log(
+    `from collection: ${col} delete key: ${key} with params ${JSON.stringify(
+      req.params
+    )}`
+  );
+  const item = await db.collection(col).delete(key);
+  console.log(JSON.stringify(item, null, 2));
+  res.json(item).end();
+});
+
+// Get a single item
+app.get('/:col/:key', async (req, res) => {
+  const col = req.params.col;
+  const key = req.params.key;
+  console.log(
+    `from collection: ${col} get key: ${key} with params ${JSON.stringify(
+      req.params
+    )}`
+  );
+  const item = await db.collection(col).get(key);
+  console.log(JSON.stringify(item, null, 2));
+  res.json(item).end();
+});
+
+// Get a full listing
+app.get('/:col', async (req, res) => {
+  const col = req.params.col;
+  console.log(
+    `list collection: ${col} with params: ${JSON.stringify(req.params)}`
+  );
+  const items = await db.collection(col).list();
+  console.log(JSON.stringify(items, null, 2));
+  res.json(items).end();
+});
+*/
+
+// Catch all handler for all other request.
+app.use('*', (req, res) => {
+  res.json({ msg: 'no route handler found' }).end();
+});
+
+// Start the server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`index.js listening on ${port}`);
+});
+
