@@ -1,15 +1,17 @@
 import db from 'cyclic-dynamodb';
-import differenceInCalendarDays from 'date-fns/differenceInCalendarDays';
-import differenceInCalendarMonths from 'date-fns/differenceInCalendarMonths';
-import differenceInCalendarWeeks from 'date-fns/differenceInCalendarWeeks';
-import format from 'date-fns/format';
-import formatISO from 'date-fns/formatISO';
-import getDate from 'date-fns/getDate';
-import getDay from 'date-fns/getDay';
-import isAfter from 'date-fns/isAfter';
-import isBefore from 'date-fns/isBefore';
-import parseISO from 'date-fns/parseISO';
-import set from 'date-fns/set';
+import {
+  differenceInCalendarDays,
+  differenceInCalendarMonths,
+  differenceInCalendarWeeks,
+  format,
+  formatISO,
+  getDate,
+  getDay,
+  isAfter,
+  isBefore,
+  parseISO,
+  set
+} from 'date-fns';
 import express from 'express';
 const app = express();
 
