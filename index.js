@@ -233,8 +233,8 @@ const getActiveSchedules = async (id) => {
   );
   schedules.sort((a, b) => a.props.priority - b.props.priority);
   const now = new Date();
-  return (schedules.results || [])
-    .map((schedule) => ({ id: schedule.id, ...schedule.props }))
+  return (schedules || [])
+    .map((schedule) => ({ id: schedule.key, ...schedule.props }))
     .filter(
       (props) =>
         (!props.from || !isAfter(parseISO(props.from), now)) &&
@@ -245,7 +245,7 @@ const getActiveSchedules = async (id) => {
         !props.rUnit ||
         recurringToday(
           now,
-          props.from,
+          parseISO(props.from),
           props.rUnit,
           props.rCount,
           props.rFrom,
@@ -253,7 +253,7 @@ const getActiveSchedules = async (id) => {
         ) ||
         recurringThisWeek(
           now,
-          props.from,
+          parseISO(props.from),
           props.rUnit,
           props.rCount,
           props.rDays,
@@ -262,7 +262,7 @@ const getActiveSchedules = async (id) => {
         ) ||
         recurringThisMonth(
           now,
-          props.from,
+          parseISO(props.from),
           props.rUnit,
           props.rCount,
           props.rDays,
@@ -280,7 +280,7 @@ const getActiveSchedules = async (id) => {
  * @returns {boolean}
  */
 const inHourMinInterval = (now, rFrom, rTo) =>
-  isBefore(todayHoursMins(rFrom), now) && isAfter(todayHoursMins(rTo));
+  isBefore(todayHoursMins(rFrom), now) && isAfter(todayHoursMins(rTo), now);
 
 /**
  *
