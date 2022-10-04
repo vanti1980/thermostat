@@ -38,7 +38,7 @@ const COLL_SCHEDULE = 'schedule';
  */
  const createId = async (req, res) => {
   // create new auth ID
-  await db.collection(COLL_ID).set(req.body, true);
+  await db.collection(COLL_ID).set(req.body., true);
 
   res.status(201).end();
 };
@@ -228,6 +228,7 @@ const withValidId = async (req, res, cbValid) => {
 
 
 app.use(express.json());
+app.use(express.text({type: 'text/plain'}));
 app.use(express.urlencoded({ extended: true }));
 
 // #############################################################################
