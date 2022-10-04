@@ -1,9 +1,31 @@
-const express = require('express');
+import db from 'cyclic-dynamodb';
+import differenceInCalendarDays from 'date-fns/differenceInCalendarDays';
+import differenceInCalendarMonths from 'date-fns/differenceInCalendarMonths';
+import differenceInCalendarWeeks from 'date-fns/differenceInCalendarWeeks';
+import format from 'date-fns/format';
+import formatISO from 'date-fns/formatISO';
+import getDate from 'date-fns/getDate';
+import getDay from 'date-fns/getDay';
+import isAfter from 'date-fns/isAfter';
+import isBefore from 'date-fns/isBefore';
+import parseISO from 'date-fns/parseISO';
+import set from 'date-fns/set';
+import express from 'express';
 const app = express();
-const bodyParser = require('body-parser');
-const db = require('cyclic-dynamodb');
 
+const COLL_ID = 'id';
+// key: <ID>_YYYYMMDD, value: [{"1005":21.5,"1010":21.75}]
+// each day a JSON string of 24*12=288 entries (with 5 min refresh), ca. 12*288=3500 bytes
+// collection would yearly contain (per ID) 365 entries = 365 * (50 + 3500) = ca. 1.3 MB
 const COLL_STATUS = 'status';
+
+// in order to be able to query exactly the days which are present (to not get keys which are not available)
+// key: <ID>_YYYY, value: ["20221001","20221002"]
+// collection would contain (per ID) 1 entry per year = 365 * 11 + 2 = 4017 bytes
+// const COLL_STATUS_DAYS = 'statusDays';
+
+// key: <ID>_<UUID>, value: {"from":"2022-10-03T10:00:00Z","priority":1,"set":19,"rUnit":"w","rDays":[0,1,2,3,4],"rFrom":"0700","rTo":"1700"} -> for recurring setting
+// key: <ID>_<UUID>, value: {"from":"2022-10-03T10:00:00Z","to":"2022-10-03T16:00:00Z","priority":10,"set":21} -> for one-time setting
 const COLL_SCHEDULE = 'schedule';
 
 app.use(express.json());
@@ -23,15 +45,11 @@ const options = {
 app.use(express.static('public', options));
 // #############################################################################
 
-// Send current temperature and wait for command
-app.post('/status', async (req, res) => {
-  // e.g. /status?id=1iusdf19287wefjh982z3oaD93kjhsdf4p&temp=22.825
+app.post('/id', createId);
+app.post('/status', postStatus);
+app.get('/schedules', getSchedules);
 
-//  const entry = await db.collection(COLL_STATUS).get(authKey);
-
-  res.json({}).end();
-});
-
+/*
 // Delete an item
 app.delete('/:col/:key', async (req, res) => {
   const col = req.params.col;
@@ -70,6 +88,7 @@ app.get('/:col', async (req, res) => {
   console.log(JSON.stringify(items, null, 2));
   res.json(items).end();
 });
+*/
 
 // Catch all handler for all other request.
 app.use('*', (req, res) => {
@@ -81,3 +100,199 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`index.js listening on ${port}`);
 });
+
+/**
+ * Handles when a new ID is created.
+ *
+ * @param {Request} req
+ * @param {Response} res
+ */
+const createId = async (req, res) => {
+  // create new auth ID
+  await db.collection(COLL_ID).set(req.body, true);
+
+  res.status(201).end();
+};
+
+/**
+ * Handles when thermostat send a status.
+ *
+ * @param {Request} req
+ * @param {Response} res
+ */
+const postStatus = async (req, res) =>
+  withValidId(req, res, async (req, res, id) => {
+    const now = new Date();
+    const key = `${id}_${format(now, 'yyyyMMdd')}`;
+    const statusColl = db.collection(COLL_STATUS);
+    const item = await statusColl.get(key);
+    let props = item.props;
+    if (!props) {
+      props = {};
+    }
+    props[format(now, 'HHmm')] = req.body.temp;
+    await statusColl.set(key, props);
+    const schedule = getEffectiveSchedule(id);
+    res
+      .json({
+        temp: req.body.temp,
+        ts: formatISO(now),
+        schedule
+      })
+      .end();
+  });
+
+/**
+ * Handles when thermostat send a status.
+ *
+ * @param {Request} req
+ * @param {Response} res
+ */
+const getSchedules = async (req, res) =>
+  withValidId(req, res, (req, res, id) => {
+    res.json(getActiveSchedules(id)).end();
+  });
+
+const getEffectiveSchedule = async (id) => {
+  const schedules = getActiveSchedules(id);
+  return schedules.pop();
+};
+
+/**
+ * Returns schedules in effect.
+ *
+ * @param {string} id Thermostat ID
+ * @returns {Promise<Schedule[]>}
+ */
+const getActiveSchedules = async (id) => {
+  // TODO solve with filter
+  const scheduleItems = await db.collection(COLL_SCHEDULE).list();
+  const schedules = scheduleItems.results.filter((item) =>
+    item.key.startsWith(`${id}_`)
+  );
+  schedules.sort((a, b) => a.props.priority - b.props.priority);
+  const now = new Date();
+  return schedules.results
+    .map((schedule) => ({ id: schedule.id, ...schedule.props }))
+    .filter(
+      (props) =>
+        (!props.from || !isAfter(parseISO(props.from), now)) &&
+        (!props.to || !isBefore(parseISO(props.to), now))
+    )
+    .filter(
+      (props) =>
+        !props.rUnit ||
+        recurringToday(
+          now,
+          props.from,
+          props.rUnit,
+          props.rCount,
+          props.rFrom,
+          props.rTo
+        ) ||
+        recurringThisWeek(
+          now,
+          props.from,
+          props.rUnit,
+          props.rCount,
+          props.rDays,
+          props.rFrom,
+          props.rTo
+        ) ||
+        recurringThisMonth(
+          now,
+          props.from,
+          props.rUnit,
+          props.rCount,
+          props.rDays,
+          props.rFrom,
+          props.rTo
+        )
+    );
+};
+
+/**
+ *
+ * @param {Date} now
+ * @param {string} rFrom
+ * @param {string} rTo
+ * @returns {boolean}
+ */
+const inHourMinInterval = (now, rFrom, rTo) =>
+  isBefore(todayHoursMins(rFrom), now) && isAfter(todayHoursMins(rTo));
+
+/**
+ *
+ * @param {Date} now
+ * @param {Date} from
+ * @param {'d'|'w'|'m'} rUnit Unit
+ * @param {number} rCount
+ * @param {string} rFrom
+ * @param {string} rTo
+ * @returns {boolean}
+ */
+const recurringToday = (now, from, rUnit, rCount, rFrom, rTo) =>
+  rUnit === 'd' &&
+  differenceInCalendarDays(now, from) % (rCount || 1) === 0 &&
+  inHourMinInterval(now, rFrom, rTo);
+
+/**
+ *
+ * @param {Date} now
+ * @param {Date} from
+ * @param {'d'|'w'|'m'} rUnit Unit
+ * @param {number} rCount
+ * @param {Array<number>} rDays
+ * @param {string} rFrom
+ * @param {string} rTo
+ * @returns {boolean}
+ */
+const recurringThisWeek = (now, from, rUnit, rCount, rDays, rFrom, rTo) =>
+  rUnit === 'w' &&
+  differenceInCalendarWeeks(now, from) % (rCount || 1) === 0 &&
+  (rDays || []).includes(getDay(now)) &&
+  inHourMinInterval(now, rFrom, rTo);
+
+/**
+ *
+ * @param {Date} now
+ * @param {Date} from
+ * @param {'d'|'w'|'m'} rUnit Unit
+ * @param {number} rCount
+ * @param {Array<number>} rDays
+ * @param {string} rFrom
+ * @param {string} rTo
+ * @returns {boolean}
+ */
+const recurringThisMonth = (now, from, rUnit, rCount, rDays, rFrom, rTo) =>
+  rUnit === 'm' &&
+  differenceInCalendarMonths(now, from) % (rCount || 1) === 0 &&
+  (rDays || []).includes(getDate(now)) &&
+  inHourMinInterval(now, rFrom, rTo);
+
+/**
+ *
+ * @param {string} hourMin
+ * @returns {Date}
+ */
+const todayHoursMins = (hourMin) =>
+  set(new Date(), {
+    hours: hourMin.substring(0, 2),
+    minutes: hourMin.substring(2, 4)
+  });
+
+/**
+ * Calls callback if ID is valid
+ * @param {Request} req
+ * @param {Response} res
+ * @param {Function} cbValid
+ */
+const withValidId = async (req, res, cbValid) => {
+  const id = req.headers['id'];
+  const entry = await db.collection(COLL_ID).get(id);
+  if (entry) {
+    await cbValid(req, res, id);
+  } else {
+    res.status(400).end();
+  }
+};

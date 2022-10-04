@@ -1,0 +1,291 @@
+openapi: 3.0.1
+info:
+  title: Thermostat application
+  version: 0.0.1
+servers:
+  - url: https://thermo.cyclic.app
+paths:
+  '/id':
+    post:
+      tags:
+        - id
+      summary: Creates new ID
+      operationId: createId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        201:
+          description: Created
+  '/status':
+    post:
+      tags:
+        - status
+      summary: Posts current status of thermostat and receives the temperature to be set
+      operationId: postStatus
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat to report status from
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusRequest'
+      responses:
+        200:
+          description: The temperature to be set as well as local time of the server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+    get:
+      tags:
+        - status
+      summary: Returns current status (to display in dashboard)
+      operationId: getStatus
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat to query status of
+      responses:
+        200:
+          description: The latest temperature data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  '/statuses':
+    get:
+      tags:
+        - statuses
+      summary: Returns a set of statuses (to display as chart or table on the dashboard)
+      operationId: getStatuses
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat to query status of
+          required: true
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          description: From the given date
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+          description: To the given date
+      responses:
+        200:
+          description: The temperature data in a given period
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Status'
+  '/schedules':
+    get:
+      tags:
+        - schedules
+      summary: Returns schedules for a given period
+      operationId: getSchedules
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat to query status of
+          required: true
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          description: From the given date
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+          description: To the given date
+      responses:
+        200:
+          description: Schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+    post:
+      tags:
+        - schedules
+      summary: Creates a new schedule
+      operationId: createSchedule
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat to query status of
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleRequest'
+      responses:
+        200:
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+  '/schedules/{scheduleId}':
+    put:
+      tags:
+        - schedules
+      summary: Modifies schedule
+      operationId: updateSchedule
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat to modify schedule for
+          required: true
+        - in: path
+          name: scheduleId
+          schema:
+            type: string
+          description: Schedule ID
+      responses:
+        200:
+          description: Updated schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+    delete:
+      tags:
+        - schedules
+      summary: Deletes schedule
+      operationId: deleteSchedule
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat to delete schedule of
+          required: true
+        - in: path
+          name: scheduleId
+          schema:
+            type: string
+          description: Schedule ID
+      responses:
+        204:
+          description: Success
+
+components:
+  schemas:
+    StatusRequest:
+      type: object
+      properties:
+        temp:
+          type: number
+          format: float
+          description: Current temperature
+          required: true
+    Status:
+      type: object
+      properties:
+        temp:
+          type: number
+          format: float
+          description: Current temperature
+          required: true
+        ts:
+          type: string
+          format: date-time
+          description: Current timestamp from the server perspective
+          required: true
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+    ScheduleRequest:
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        recurring:
+          $ref: '#/components/schemas/Recurring'
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          required: true
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        priority:
+          type: integer
+          format: int32
+          description: The rule priority of rule to process (the higher the most precedence)
+        set:
+          type: number
+          format: float
+          description: Temperature to set
+          required: true
+        recurring:
+          $ref: '#/components/schemas/Recurring'
+    Recurring:
+      type: object
+      properties:
+        unit:
+          type: string
+          enum:
+            - d
+            - w
+            - m
+        count:
+          type: integer
+          format: int32
+          description: Apply the schedule only on the 2nd, 3rd day/week/month, 1 is assumed if omitted
+          required: false
+        days:
+          type: array
+          description: Execute schedule only on the given days (only meaningful for week and month settings) starting with 0 as Sunday or the 1 for the 1st of month
+          items:
+            type: integer
+            format: int32
+        from:
+          type: string
+          format: date-time
+          description: Apply from timestamp (only time part is taken into consideration)
+        to:
+          type: string
+          format: date-time
+          description: Apply from timestamp (only time part is taken into consideration)
