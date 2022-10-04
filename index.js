@@ -1,4 +1,4 @@
-import cyclicDb from 'cyclic-dynamodb';
+import { CyclicDb as db } from 'cyclic-dynamodb';
 import {
   differenceInCalendarDays,
   differenceInCalendarMonths,
@@ -13,7 +13,6 @@ import {
   set
 } from 'date-fns';
 import express from 'express';
-const db = cyclicDb()('taupe-hermit-crab-togaCyclicDB');
 const app = express();
 
 const COLL_ID = 'id';
@@ -37,7 +36,7 @@ const COLL_SCHEDULE = 'schedule';
  * @param {Request} req
  * @param {Response} res
  */
- const createId = async (req, res) => {
+const createId = async (req, res) => {
   // create new auth ID
   console.log(req.body);
   await db.collection(COLL_ID).set(req.body, {});
@@ -228,9 +227,8 @@ const withValidId = async (req, res, cbValid) => {
   }
 };
 
-
 app.use(express.json());
-app.use(express.text({type: 'text/plain'}));
+app.use(express.text({ type: 'text/plain' }));
 app.use(express.urlencoded({ extended: true }));
 
 // #############################################################################
@@ -302,4 +300,3 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`index.js listening on ${port}`);
 });
-
