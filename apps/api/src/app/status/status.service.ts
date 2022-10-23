@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { Status, StatusRequest } from '@models';
 import * as db from 'cyclic-dynamodb';
-import { format, formatISO, set } from 'date-fns';
+import { format, formatISO, set, sub } from 'date-fns';
 import { ScheduleService } from '../schedule/schedule.service';
 
 type Unit = 'd' | 'w' | 'm';
@@ -29,15 +29,16 @@ export class StatusService {
   constructor(private scheduleSvc: ScheduleService) {}
 
   async getStatus(id: string): Promise<Status> {
-    Logger.debug(`getStatus id=${id}`);
+    this.logger.debug(`getStatus id=${id}`);
     const statusColl = db.collection(COLL_STATUS);
     let statusItem: Status | undefined = undefined;
     let iterations = 0;
+    let latestDate = new Date();
     do {
-      const latestDate = new Date();
       const key = `${id}_${format(latestDate, 'yyyyMMdd')}`;
       statusItem = await statusColl.get(key);
-    } while (!statusItem && iterations < MAX_LOOK_BEHIND);
+      latestDate = sub(latestDate, {days: 1});
+    } while (!statusItem && iterations++ < MAX_LOOK_BEHIND);
 
     if (statusItem) {
       const latestStatus = this.getStatusesFromItem(statusItem).pop();
@@ -58,7 +59,7 @@ export class StatusService {
   }
 
   async getStatuses(id: string, from?: string, to?: string): Promise<Status[]> {
-    Logger.debug(`getStatuses id=${id}, from=${from}, to=${to}`);
+    this.logger.debug(`getStatuses id=${id}, from=${from}, to=${to}`);
     const briefStatusItems = await db.collection(COLL_STATUS).list();
     const statusItems = await Promise.all(
       briefStatusItems.results
@@ -69,7 +70,7 @@ export class StatusService {
   }
 
   async postStatus(id: string, statusRequest: StatusRequest): Promise<Status> {
-    Logger.debug(`postStatus id=${id}, statusRequest=${JSON.stringify(statusRequest)}`);
+    this.logger.debug(`postStatus id=${id}, statusRequest=${JSON.stringify(statusRequest)}`);
     const now = new Date();
     const key = `${id}_${format(now, 'yyyyMMdd')}`;
     const statusColl = db.collection(COLL_STATUS);
@@ -118,7 +119,7 @@ export class StatusService {
     }
     return {
       year: +parts[parts.length - 1].substring(0, 4),
-      month: +parts[parts.length - 1].substring(4, 6),
+      month: (+parts[parts.length - 1].substring(4, 6)) - 1,
       date: +parts[parts.length - 1].substring(6, 8),
     };
   }

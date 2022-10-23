@@ -21,9 +21,9 @@
  * - Delete and reinstall your node_modules
  */
 
-import * as fs from 'fs';
-import * as os from 'os';
-import * as cp from 'child_process';
+const fs = require('fs');
+const os = require('os');
+const cp = require('child_process');
 const isWindows = os.platform() === 'win32';
 let output;
 try {
