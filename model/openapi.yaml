@@ -6,6 +6,20 @@ servers:
   - url: https://thermo.cyclic.app
 paths:
   '/id':
+    get:
+      tags:
+        - id
+      summary: Query IDs
+      operationId: getIds
+      responses:
+        200:
+          description: The IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
     post:
       tags:
         - id
@@ -178,6 +192,12 @@ paths:
           schema:
             type: string
           description: Schedule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Schedule'
       responses:
         200:
           description: Updated schedule
@@ -228,6 +248,8 @@ components:
           format: date-time
           description: Current timestamp from the server perspective
           required: true
+        schedule:
+          $ref: '#/components/schemas/Schedule'
     ScheduleRequest:
       type: object
       properties:

@@ -1,0 +1,21 @@
+{
+  "extends": ["@r-software/ng-rap-ruleset"],
+  "rules": {
+    "deprecation": {
+      "severity": "warning"
+    },
+    "nx-enforce-module-boundaries": [
+      true,
+      {
+        "allow": [],
+        "depConstraints": [
+          {
+            "sourceTag": "*",
+            "onlyDependOnLibsWithTags": ["*"]
+          }
+        ]
+      }
+    ]
+  },
+  "rulesDirectory": ["node_modules/@nrwl/workspace/src/tslint"]
+}
