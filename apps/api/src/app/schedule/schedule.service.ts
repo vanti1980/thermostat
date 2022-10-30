@@ -1,6 +1,5 @@
-import { Schedule, ScheduleRequest } from '@models';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import * as db from 'cyclic-dynamodb';
+import { Schedule, ScheduleRequest } from '../shared/models';
+import db from 'cyclic-dynamodb';
 import { v4 as uuid } from 'uuid';
 
 import {
@@ -14,6 +13,8 @@ import {
   parseISO,
   set,
 } from 'date-fns';
+import { Logger } from '../shared/logger';
+import { HttpException, HttpStatus } from '../shared/exceptions/http-exception';
 
 type Unit = 'd' | 'w' | 'm';
 
@@ -26,7 +27,6 @@ type Unit = 'd' | 'w' | 'm';
 // key: <ID>_<UUID>, value: {"from":"2022-10-03T10:00:00Z","to":"2022-10-03T16:00:00Z","priority":10,"set":21} -> for one-time setting
 const COLL_SCHEDULE = 'schedule';
 
-@Injectable()
 export class ScheduleService {
   private readonly logger = new Logger(ScheduleService.name);
 

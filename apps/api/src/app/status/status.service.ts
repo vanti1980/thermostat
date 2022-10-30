@@ -1,8 +1,9 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { Status, StatusRequest } from '@models';
-import * as db from 'cyclic-dynamodb';
+import { Status, StatusRequest } from '../shared/models';
+import db from 'cyclic-dynamodb';
 import { format, formatISO, set, sub } from 'date-fns';
 import { ScheduleService } from '../schedule/schedule.service';
+import { HttpException, HttpStatus } from '../shared/exceptions/http-exception';
+import { Logger } from '../shared/logger';
 
 type Unit = 'd' | 'w' | 'm';
 
@@ -22,7 +23,6 @@ const COLL_STATUS = 'status';
 
 const MAX_LOOK_BEHIND = 30;
 
-@Injectable()
 export class StatusService {
   private readonly logger = new Logger(StatusService.name);
 

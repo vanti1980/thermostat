@@ -1,39 +1,36 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpException,
-  HttpStatus,
-  Logger,
-  Post,
-} from '@nestjs/common';
+import express, { Request, Response } from 'express';
+import { HttpStatus } from '../shared/exceptions/http-exception';
+import { Logger } from '../shared/logger';
 import { IdService } from './id.service';
-
-@Controller('id')
 export class IdController {
   private readonly logger = new Logger(IdController.name);
 
-  constructor(private idService: IdService) {}
-
-  @Get('')
-  async getIds(): Promise<string[]> {
-    return this.idService.getIds().catch((err) => {
-      this.logger.error(`Could not query IDs`, err);
-      throw new HttpException(
-        `Could not query IDs`,
-        HttpStatus.BAD_REQUEST
-      );
-    });
+  constructor(readonly app: express.Express, private idService: IdService) {
+    app.get('/api/id', this.getIds.bind(this));
+    app.post('/api/id', this.createId.bind(this));
   }
 
-  @Post('')
-  async createId(@Body() id: string): Promise<string> {
-    return this.idService.createId(id).catch((err) => {
-      this.logger.error(`Could not create ID ${id}`, err);
-      throw new HttpException(
-        `Could not create ID ${id}`,
-        HttpStatus.BAD_REQUEST
-      );
-    });
+  async getIds(req: Request, res: Response): Promise<void> {
+    this.idService
+      .getIds()
+      .then((val) => res.json(val).end())
+      .catch((err) => {
+        this.logger.error(`Could not query IDs`, err);
+        res.json(`Could not query IDs`).status(HttpStatus.BAD_REQUEST).end();
+      });
+  }
+
+  async createId(req: Request, res: Response): Promise<void> {
+    const id = req.body;
+    this.idService
+      .createId(id)
+      .then((val) => res.json(val).end())
+      .catch((err) => {
+        this.logger.error(`Could not create ID ${id}`, err);
+        res
+          .json(`Could not create ID ${id}`)
+          .status(HttpStatus.BAD_REQUEST)
+          .end();
+      });
   }
 }

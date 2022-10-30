@@ -13,7 +13,6 @@
     "target": "es2015",
     "lib": ["es2018", "dom"],
     "paths": {
-      "@models": ["libs/models/src/index.ts"],
       "meta-data": ["src/app/gen/meta-data"],
       "meta-data/*": ["src/app/gen/meta-data/*"]
     },
