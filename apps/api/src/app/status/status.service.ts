@@ -21,7 +21,7 @@ const COLL_SCHEDULE = 'schedule';
 // collection would yearly contain (per ID) 365 entries = 365 * (50 + 3500) = ca. 1.3 MB
 const COLL_STATUS = 'status';
 
-const MAX_LOOK_BEHIND = 30;
+const MAX_LOOK_BEHIND = 360;
 
 export class StatusService {
   private readonly logger = new Logger(StatusService.name);
@@ -43,7 +43,11 @@ export class StatusService {
     if (statusItem) {
       const latestStatus = this.getStatusesFromItem(statusItem).pop();
       if (latestStatus) {
-        return latestStatus;
+        const schedule = await this.scheduleSvc.getEffectiveSchedule(id);
+        return {
+          ...latestStatus,
+          schedule
+        };
       } else {
         throw new HttpException(
           'Could not retrieve status because no status found',

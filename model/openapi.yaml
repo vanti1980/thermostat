@@ -129,17 +129,10 @@ paths:
           description: ID of thermostat to query status of
           required: true
         - in: query
-          name: from
+          name: status
           schema:
             type: string
-            format: date
-          description: From the given date
-        - in: query
-          name: to
-          schema:
-            type: string
-            format: date
-          description: To the given date
+            enum: [active,all]
       responses:
         200:
           description: Schedules
@@ -175,7 +168,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/Schedule'
   '/schedules/{scheduleId}':
-    put:
+    get:
+      tags:
+        - schedules
+      summary: Retrieves a single schedule
+      operationId: getSchedule
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat to get schedule of
+          required: true
+        - in: path
+          name: scheduleId
+          schema:
+            type: string
+          description: Schedule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+      responses:
+        200:
+          description: Schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+    patch:
       tags:
         - schedules
       summary: Modifies schedule

@@ -15,6 +15,9 @@ import {
 } from 'date-fns';
 import { Logger } from '../shared/logger';
 import { HttpException, HttpStatus } from '../shared/exceptions/http-exception';
+import { CyclicCollection, CyclicItem } from '../shared/types/cyclic-item';
+import { DbSchedule, fromDb, toDb } from '../shared/models/db/schedule';
+import { TStatus } from '../shared/types/status';
 
 type Unit = 'd' | 'w' | 'm';
 
@@ -32,35 +35,37 @@ export class ScheduleService {
 
   constructor() {}
 
+  async getSchedule(scheduleId: string): Promise<Schedule> {
+    const schedule: CyclicItem<DbSchedule> = await db.collection(COLL_SCHEDULE).get(scheduleId);
+    if (!schedule) {
+      throw new HttpException(
+        `Could not get schedule with ID ${scheduleId}`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return fromDb(schedule);
+  }
+
   /**
    * Handles when thermostat send a status.
-   *
-   * @param {Request} req
-   * @param {Response} res
+   * @param id
    */
-  async getSchedules(id: string): Promise<Schedule[]> {
-    return await this.getActiveSchedules(id);
+  async getSchedules(id: string, status: TStatus = 'active'): Promise<Schedule[]> {
+    const activeSchedules = await this.getSchedulesWithStatus(id, status, true);
+    return activeSchedules;
   }
 
   async createSchedule(
     id: string,
-    request: ScheduleRequest
+    request: ScheduleRequest,
   ): Promise<Schedule> {
     // key: <ID>_<UUID>, value: {"from":"2022-10-03T10:00:00Z","priority":1,"set":19,"rUnit":"w","rDays":[0,1,2,3,4],"rFrom":"0700","rTo":"1700"} -> for recurring setting
     const key = `${id}_${uuid()}`;
+    const schedules = await this.getAllSchedules(id);
     const priority =
-      (await db.collection(COLL_SCHEDULE).list()).results.length + 1;
-    await db.collection(COLL_SCHEDULE).set(key, {
-      from: request.from,
-      to: request.to,
-      priority,
-      set: request.set,
-      rUnit: request.recurring?.unit,
-      rCount: request.recurring?.count,
-      rDays: request.recurring?.days,
-      rFrom: request.recurring?.from,
-      rTo: request.recurring?.to,
-    });
+      schedules.reduce((prev, curr) => Math.max(prev, curr.priority), 0) + 1;
+    await db.collection(COLL_SCHEDULE).set(key, toDb(request));
     return {
       ...request,
       id: key,
@@ -73,92 +78,113 @@ export class ScheduleService {
     if (!schedule) {
       throw new HttpException(
         `Could not delete schedule with ID ${scheduleId}`,
-        HttpStatus.NOT_FOUND
+        HttpStatus.NOT_FOUND,
       );
     }
   }
 
   async updateSchedule(
     scheduleId: string,
-    request: Schedule
+    request: Partial<Schedule>,
   ): Promise<Schedule> {
     // key: <ID>_<UUID>, value: {"from":"2022-10-03T10:00:00Z","priority":1,"set":19,"rUnit":"w","rDays":[0,1,2,3,4],"rFrom":"0700","rTo":"1700"} -> for recurring setting
-    const schedule = await db.collection(COLL_SCHEDULE).get(scheduleId);
+    const schedule: CyclicItem<DbSchedule> = await db.collection(COLL_SCHEDULE).get(scheduleId);
     if (!schedule) {
       throw new HttpException(
         `Could not find schedule with ID ${scheduleId}`,
-        HttpStatus.NOT_FOUND
+        HttpStatus.NOT_FOUND,
       );
     }
-    const updatedSchedule = {
-      ...schedule,
-      from: request.from,
-      to: request.to,
-      set: request.set,
-      rUnit: request.recurring?.unit,
-      rCount: request.recurring?.count,
-      rDays: request.recurring?.days,
-      rFrom: request.recurring?.from,
-      rTo: request.recurring?.to,
-    };
-    await db.collection(COLL_SCHEDULE).set(scheduleId, updatedSchedule);
-    return updatedSchedule;
+    await db.collection(COLL_SCHEDULE).set(scheduleId, toDb(request));
+
+    return fromDb(await db.collection(COLL_SCHEDULE).get(scheduleId));
+  }
+
+  private async getAllSchedules(id: string): Promise<Schedule[]> {
+    // TODO solve with filter
+    const briefScheduleItems: CyclicCollection<DbSchedule> = await db
+      .collection(COLL_SCHEDULE)
+      .list();
+    const briefSchedules = briefScheduleItems.results.filter((item) =>
+      item.key.startsWith(`${id}_`),
+    );
+    const schedules = (await Promise.all(
+      briefSchedules.map((sch) => db.collection(COLL_SCHEDULE).get(sch.key)),
+    )) as CyclicItem<DbSchedule>[];
+    schedules.sort((a, b) => a.props.priority - b.props.priority);
+
+    return schedules.map(fromDb);
   }
 
   /**
    * Returns schedules in effect.
    *
-   * @param {string} id Thermostat ID
+   * @param id Thermostat Id
+   * @param status Statuses of schedules to be returned
+   * @param cleanup If obsolete schedules should be cleaned up
    * @returns {Promise<Schedule[]>}
    */
-  private async getActiveSchedules(id: string): Promise<Schedule[]> {
-    // TODO solve with filter
-    const briefScheduleItems = await db.collection(COLL_SCHEDULE).list();
-    const briefSchedules = briefScheduleItems.results.filter((item) =>
-      item.key.startsWith(`${id}_`)
-    );
-    const schedules = await Promise.all(
-      briefSchedules.map((sch) => db.collection(COLL_SCHEDULE).get(sch.key))
-    );
-    schedules.sort((a, b) => a.props.priority - b.props.priority);
+  private async getSchedulesWithStatus(id: string, status: TStatus, cleanup?: boolean): Promise<Schedule[]> {
+    let schedules = await this.getAllSchedules(id);
+    if (cleanup) {
+      schedules = await this.deleteObsoleteSchedules(schedules);
+    }
     const now = new Date();
-    return (schedules || [])
-      .map((schedule) => ({ id: schedule.key, ...schedule.props }))
+    return status === 'active' ? (schedules || [])
       .filter(
-        (props) =>
-          (!props.from || !isAfter(parseISO(props.from), now)) &&
-          (!props.to || !isBefore(parseISO(props.to), now))
+        (schedule) =>
+          (!schedule.from || !isAfter(parseISO(schedule.from), now)) &&
+          (!schedule.to || !isBefore(parseISO(schedule.to), now)),
       )
       .filter(
-        (props) =>
-          !props.rUnit ||
+        (schedule) =>
+          !schedule.recurring?.unit ||
           this.recurringToday(
             now,
-            parseISO(props.from),
-            props.rUnit,
-            props.rCount,
-            props.rFrom,
-            props.rTo
+            parseISO(schedule.from),
+            schedule.recurring.unit,
+            schedule.recurring.count,
+            schedule.recurring.from,
+            schedule.recurring.to,
           ) ||
           this.recurringThisWeek(
             now,
-            parseISO(props.from),
-            props.rUnit,
-            props.rCount,
-            props.rDays,
-            props.rFrom,
-            props.rTo
+            parseISO(schedule.from),
+            schedule.recurring.unit,
+            schedule.recurring.count,
+            schedule.recurring.days,
+            schedule.recurring.from,
+            schedule.recurring.to,
           ) ||
           this.recurringThisMonth(
             now,
-            parseISO(props.from),
-            props.rUnit,
-            props.rCount,
-            props.rDays,
-            props.rFrom,
-            props.rTo
-          )
-      );
+            parseISO(schedule.from),
+            schedule.recurring.unit,
+            schedule.recurring.count,
+            schedule.recurring.days,
+            schedule.recurring.from,
+            schedule.recurring.to,
+          ),
+      ) : schedules;
+  }
+
+  async deleteObsoleteSchedules(schedules: Schedule[]): Promise<Schedule[]> {
+    const now = new Date();
+    const toDelete: Schedule[] = [];
+    const filteredSchedules = schedules.filter((schedule) => {
+      if (schedule.to && isAfter(now, parseISO(schedule.to))) {
+        toDelete.push(schedule);
+        return false;
+      }
+      return true;
+    });
+
+    await Promise.all(
+      toDelete.map((schedule) =>
+        db.collection(COLL_SCHEDULE).delete(schedule.id),
+      ),
+    );
+    return filteredSchedules;
   }
 
   /**
@@ -167,7 +193,7 @@ export class ScheduleService {
    * @returns {Promise<Schedule | undefined>}
    */
   async getEffectiveSchedule(id: string): Promise<Schedule> {
-    const schedules = await this.getActiveSchedules(id);
+    const schedules = await this.getSchedulesWithStatus(id, 'active', false);
     return schedules.pop();
   }
 
@@ -201,7 +227,7 @@ export class ScheduleService {
     rUnit: Unit,
     rCount?: number,
     rFrom?: string,
-    rTo?: string
+    rTo?: string,
   ): boolean {
     return (
       rUnit === 'd' &&
@@ -228,7 +254,7 @@ export class ScheduleService {
     rCount: number | undefined,
     rDays: number[],
     rFrom?: string,
-    rTo?: string
+    rTo?: string,
   ) {
     return (
       rUnit === 'w' &&
@@ -256,7 +282,7 @@ export class ScheduleService {
     rCount: number | undefined,
     rDays: number[],
     rFrom?: string,
-    rTo?: string
+    rTo?: string,
   ): boolean {
     return (
       rUnit === 'm' &&

@@ -1,0 +1,114 @@
+{
+  "common": {
+    "button": {
+      "back": "Back",
+      "next": "Next",
+      "save": "Save"
+    },
+    "loading": "Loading..."
+  },
+  "dashboard": {
+    "currentTemp": "Current temp.:",
+    "messages": {
+      "error": {
+        "status": {
+          "message": "Could not get latest status"
+        }
+      }
+    },
+    "scheduled": "Scheduled:",
+    "targetTemp": "Target temp.:"
+  },
+  "id": {
+    "label": "Thermostat Id",
+    "placeholder": "Enter thermostat Id to manage"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "schedules": "Schedules",
+    "settings": "Settings"
+  },
+  "schedule": {
+    "every": "Every",
+    "from": "From",
+    "isRecurring": {
+      "true": "Recurring",
+      "false": "Single"
+    },
+    "limitRecurring": {
+      "true": "Till",
+      "false": "Without end"
+    },
+    "messages": {
+      "error": {
+        "id": {
+          "message": "Could not get ID"
+        },
+        "schedule": {
+          "message": "Could not get schedule"
+        }
+      },
+      "success": {
+        "create": "Schedule successfully created",
+        "update": "Schedule successfully updated"
+      }
+    },
+    "monthDays": "on days {days}",
+    "recurring": {
+      "every": "every {count} {unit}"
+    },
+    "to": "To",
+    "unit": {
+      "d": "day | days",
+      "w": "week | weeks",
+      "m": "month | months"
+    },
+    "weekDays": {
+      "0": "Su",
+      "1": "Mo",
+      "2": "Tu",
+      "3": "We",
+      "4": "Th",
+      "5": "Fr",
+      "6": "Sa"
+    }
+  },
+  "schedules": {
+    "header": "List of schedules",
+    "messages": {
+      "error": {
+        "schedules": {
+          "message": "Could not get schedules"
+        }
+      },
+      "success": {
+        "delete": "Schedule successfully deleted"
+      }
+    },
+    "monthDays": "on days {days}",
+    "recurring": {
+      "every": "every {count} {unit}"
+    },
+    "to": "To",
+    "unit": {
+      "d": "day | days",
+      "w": "week | weeks",
+      "m": "month | months"
+    },
+    "weekDays": {
+      "0": "Su",
+      "1": "Mo",
+      "2": "Tu",
+      "3": "We",
+      "4": "Th",
+      "5": "Fr",
+      "6": "Sa"
+    }
+  },
+  "settings": {
+    "id": {
+      "label": "Id",
+      "placeholder": "Enter thermostat Id to manage"
+    }
+  }
+}

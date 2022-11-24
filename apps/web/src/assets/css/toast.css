@@ -1,0 +1,19 @@
+.toast {
+  background: #fff;
+  cursor: pointer;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  z-index: 2000;
+}
+.toast-body {
+  margin: 0.5rem;
+}
+.toast-header.error {
+  background: #f44336;
+  color: #fff;
+}
+.toast-header.info {
+  background: #1d83d2;
+  color: #fff;
+}

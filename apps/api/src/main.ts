@@ -22,7 +22,8 @@ const options = {
   redirect: true,
 };
 
-app.use(bodyParser.json({ limit: '50mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -48,9 +49,7 @@ new IdController(app, idSvc);
 new ScheduleController(app, idSvc, scheduleSvc);
 new StatusController(app, idSvc, new StatusService(scheduleSvc));
 
-
 app.use(express.static('dist/public', options));
-
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

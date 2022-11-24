@@ -1,9 +1,19 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance } from 'axios';
 
+const devServer = 'webpackHotUpdatethermostat' in window;
 const apiClient: AxiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: `${devServer ? 'http://localhost:3000' : ''}/api`,
   headers: {
-    "Content-type": "application/json",
+    'Content-Type': 'application/json',
+    patch: {
+      'Content-Type': 'application/json',
+    },
+    post: {
+      'Content-Type': 'application/json',
+    },
+    put: {
+      'Content-Type': 'application/json',
+    },
   },
 });
 

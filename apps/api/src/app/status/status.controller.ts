@@ -1,35 +1,31 @@
 import express, { Request, Response } from 'express';
-import { Status, StatusRequest } from '../shared/models';
 import { IdService } from '../id/id.service';
-import { StatusService } from './status.service';
-import { HttpStatus } from '../shared/exceptions/http-exception';
+import { handleError } from '../shared/functions/handle-error';
 import { Logger } from '../shared/logger';
+import { StatusRequest } from '../shared/models';
+import { StatusService } from './status.service';
 
 export class StatusController {
-
   private readonly logger = new Logger(StatusController.name);
 
   constructor(
     readonly app: express.Express,
     private idSvc: IdService,
-    private statusSvc: StatusService
+    private statusSvc: StatusService,
   ) {
     app.get('/api/status', this.getStatus.bind(this));
     app.post('/api/status', this.postStatus.bind(this));
     app.get('/api/statuses', this.getStatuses.bind(this));
-
   }
 
   async getStatus(req: Request, res: Response): Promise<Response> {
     const id = req.headers.id as string;
 
-    return this.idSvc.checkValidId(id)
-    .then(() => this.statusSvc.getStatus(id))
-    .then(val => res.json(val).end())
-    .catch((err) => {
-      this.logger.error(`Could not query status`, err);
-      return res.json(`Could not query status`).status(HttpStatus.BAD_REQUEST).end();
-    });
+    return this.idSvc
+      .checkValidId(id)
+      .then(() => this.statusSvc.getStatus(id))
+      .then((val) => res.json(val).end())
+      .catch(handleError(`Could not query status`, res, this.logger));
   }
 
   async postStatus(req: Request, res: Response): Promise<Response> {
@@ -39,12 +35,8 @@ export class StatusController {
     return this.idSvc
       .checkValidId(id)
       .then(() => this.statusSvc.postStatus(id, statusRequest))
-      .then(status => res.json(status).end())
-      .catch((err) => {
-        this.logger.error(`Could not create status`, err);
-        return res.json(`Could not create status`).status(HttpStatus.BAD_REQUEST).end();
-      });
-
+      .then((status) => res.json(status).end())
+      .catch(handleError(`Could not create status`, res, this.logger));
   }
 
   async getStatuses(req: Request, res: Response): Promise<Response> {
@@ -54,10 +46,7 @@ export class StatusController {
     return this.idSvc
       .checkValidId(id)
       .then(() => this.statusSvc.getStatuses(id, from, to))
-      .then(statuses => res.json(statuses).end())
-      .catch((err) => {
-        this.logger.error(`Could not query statuses`, err);
-        return res.json(`Could not query statuses`).status(HttpStatus.BAD_REQUEST).end();
-      });
+      .then((statuses) => res.json(statuses).end())
+      .catch(handleError(`Could not query statuses`, res, this.logger));
   }
 }

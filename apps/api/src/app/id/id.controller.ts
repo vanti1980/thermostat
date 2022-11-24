@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { HttpStatus } from '../shared/exceptions/http-exception';
+import { handleError } from '../shared/functions/handle-error';
 import { Logger } from '../shared/logger';
 import { IdService } from './id.service';
 export class IdController {
@@ -14,10 +15,7 @@ export class IdController {
     this.idService
       .getIds()
       .then((val) => res.json(val).end())
-      .catch((err) => {
-        this.logger.error(`Could not query IDs`, err);
-        res.json(`Could not query IDs`).status(HttpStatus.BAD_REQUEST).end();
-      });
+      .catch(handleError(`Could not query IDs`, res, this.logger));
   }
 
   async createId(req: Request, res: Response): Promise<void> {
@@ -25,12 +23,6 @@ export class IdController {
     this.idService
       .createId(id)
       .then((val) => res.json(val).end())
-      .catch((err) => {
-        this.logger.error(`Could not create ID ${id}`, err);
-        res
-          .json(`Could not create ID ${id}`)
-          .status(HttpStatus.BAD_REQUEST)
-          .end();
-      });
+      .catch(handleError(`Could not create ID ${id}`, res, this.logger));
   }
 }

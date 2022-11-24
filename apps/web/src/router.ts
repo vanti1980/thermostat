@@ -6,6 +6,30 @@ const routes: Array<RouteRecordRaw> = [
     alias: '/dashboard',
     name: 'dashboard',
     component: () => import('./components/Dashboard.vue'),
+  },
+  {
+    path: '/schedules',
+    name: 'schedules',
+    component: () => import('./components/Schedules.vue'),
+    props: true,
+  },
+  {
+    path: '/schedules/instant',
+    name: 'scheduleInstant',
+    component: () => import('./components/Schedule.vue'),
+    props: true,
+  },
+  {
+    path: '/schedules/:scheduleId',
+    name: 'schedule',
+    component: () => import('./components/Schedule.vue'),
+    props: true,
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('./components/Settings.vue'),
+    props: true,
   }
 ];
 
