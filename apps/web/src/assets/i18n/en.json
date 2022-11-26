@@ -76,7 +76,11 @@
   "schedules": {
     "header": "List of schedules",
     "messages": {
+      "confirm": {
+        "delete": "Do you want to remove this schedule?"
+      },
       "error": {
+        "delete": "Could not delete schedule",
         "schedules": {
           "message": "Could not get schedules"
         }
@@ -94,6 +98,10 @@
       "d": "day | days",
       "w": "week | weeks",
       "m": "month | months"
+    },
+    "viewOptions": {
+      "calendar": "Calendar",
+      "rules": "Rules"
     },
     "weekDays": {
       "0": "Su",

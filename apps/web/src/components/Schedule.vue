@@ -278,7 +278,7 @@ export default defineComponent({
         return this.schedule?.to ? parseISO(this.schedule!.to) : undefined;
       },
       set to(val: Date | undefined) {
-        this.schedule!.to = val ? format(val, 'HHmm') : undefined;
+        this.schedule!.to = val ? formatISO(val) : undefined;
       },
       get rTo() {
         return this.schedule?.recurring?.to
@@ -353,21 +353,25 @@ export default defineComponent({
             )
           : ScheduleService.createSchedule(this._id, this.schedule!);
       save$
-      .then(schedule => {
-        bus.emit('toast', {
-          type: 'success',
-          message: this.$t(`schedule.messages.success.${'id' in this.schedule! ? 'update': 'create'}`),
+        .then((schedule) => {
+          bus.emit('toast', {
+            type: 'success',
+            message: this.$t(
+              `schedule.messages.success.${
+                'id' in this.schedule! ? 'update' : 'create'
+              }`,
+            ),
+          });
+          router.push({ name: 'schedules', params: {} });
+        })
+        .catch((e: Error) => {
+          console.log(e);
+          bus.emit('toast', {
+            type: 'error',
+            message: this.$t('schedule.messages.error.schedule.message'),
+          });
+          return undefined;
         });
-        router.push({ name: 'schedules', params: {} });
-      })
-      .catch((e: Error) => {
-        console.log(e);
-        bus.emit('toast', {
-          type: 'error',
-          message: this.$t('schedule.messages.error.schedule.message'),
-        });
-        return undefined;
-      });
     },
     searchDaysOfMonth(event: { query: string }) {
       this._searchDays(
@@ -419,44 +423,7 @@ export default defineComponent({
 </script>
 
 <style>
-button {
-  position: relative;
-  overflow: hidden;
-  transition: background 400ms;
-  outline: 0;
-  border: 0;
-  border-radius: 25%;
-  box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-}
 .autocomplete-panel {
   max-height: 600px !important;
-}
-.font-largest {
-  font-size: 15vh;
-}
-.font-larger {
-  font-size: 12vh;
-}
-.v-input.font-larger {
-  flex: 0 0 auto;
-  transform: scale(2) translate(25%);
-}
-.turned-icon {
-  height: 7vh;
-  margin-top: -1rem;
-}
-span.ripple {
-  position: absolute; /* The absolute position we mentioned earlier */
-  border-radius: 50%;
-  transform: scale(0);
-  animation: ripple 600ms linear;
-  background-color: rgba(255, 255, 255, 0.7);
-}
-@keyframes ripple {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
 }
 </style>

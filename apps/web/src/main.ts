@@ -1,6 +1,7 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import PrimeVue from 'primevue/config';
+import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
 import { createApp } from 'vue';
 import { createI18n } from 'vue-i18n';
@@ -9,18 +10,43 @@ import en from './assets/i18n/en.json';
 import hu from './assets/i18n/hu.json';
 import router from './router';
 
-
 const i18n = createI18n({
   locale: window.navigator.language,
   datetimeFormats: {
     hu: {
-      short: {
-        year: 'numeric', month: 'numeric', day: 'numeric'
+      date: {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      },
+      time: {
+        hour: 'numeric',
+        minute: 'numeric',
+      },
+      datetime: {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
       },
     },
     en: {
-      short: {
-        year: 'numeric', month: 'numeric', day: 'numeric'
+      date: {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      },
+      time: {
+        hour: 'numeric',
+        minute: 'numeric',
+      },
+      datetime: {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
       },
     },
   },
@@ -44,4 +70,10 @@ const i18n = createI18n({
 });
 
 const app = createApp(App);
-app.use(router).use(i18n).use(PrimeVue).use(ToastService).mount('#app');
+app
+  .use(router)
+  .use(i18n)
+  .use(PrimeVue)
+  .use(ToastService)
+  .use(ConfirmationService)
+  .mount('#app');

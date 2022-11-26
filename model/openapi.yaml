@@ -142,6 +142,29 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Schedule'
+    patch:
+      tags:
+        - schedules
+      summary: Reorders schedules
+      operationId: reorderSchedules
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+          description: ID of thermostat
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ScheduleOrderRequest'
+      responses:
+        204:
+          description: Schedules reordered
     post:
       tags:
         - schedules
@@ -327,3 +350,14 @@ components:
         to:
           type: string
           description: HHmm
+    ScheduleOrderRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          required: true
+        priority:
+          type: integer
+          format: int32
+          description: The rule priority of rule to process (the higher the most precedence)
+          required: true

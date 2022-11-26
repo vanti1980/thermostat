@@ -27,7 +27,7 @@
     </nav>
 
     <div
-      class="container mt-3 flex-grow-1 d-flex justify-content-center sm:mx-0 xl:mx-3"
+      class="mt-3 flex-grow-1 d-flex justify-content-center sm:mx-1 xl:mx-3"
     >
       <router-view />
     </div>

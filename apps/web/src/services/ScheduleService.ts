@@ -49,6 +49,18 @@ class ScheduleService {
     });
   }
 
+  async reorder(id: string, schedules: Schedule[]): Promise<void> {
+    http
+      .patch<{id: string, priority: number}>(`/schedule`, schedules.map(schedule => ({
+        id: schedule.id,
+        priority: schedule.priority
+      })), {
+        headers: {
+          id,
+        },
+      });
+  }
+
   async updateSchedule(
     id: string,
     scheduleId: string,

@@ -20,6 +20,12 @@ const routes: Array<RouteRecordRaw> = [
     props: true,
   },
   {
+    path: '/schedules/new',
+    name: 'scheduleNew',
+    component: () => import('./components/Schedule.vue'),
+    props: true,
+  },
+  {
     path: '/schedules/:scheduleId',
     name: 'schedule',
     component: () => import('./components/Schedule.vue'),

@@ -1,86 +1,42 @@
 <template>
-  <div v-if="schedules" class="w-100">
-    <OrderList v-model="schedules" listStyle="height:auto" dataKey="id">
-      <template #header> {{ $t('schedules.header') }} </template>
-      <template #item="slotProps">
-        <div class="p-scheduleitem" @click="open(slotProps.item.id)">
-          <div class="p-scheduleset">{{ slotProps.item.set }} °C</div>
-          <div v-if="slotProps.item.recurring">
-            <span class="sm:hidden xl:inline"
-              >{{ $t('dashboard.scheduled') }}
-            </span>
-            <div>
-              {{ recurringFormatter.getREveryText(slotProps.item.recurring) }}
-            </div>
-            <div v-if="slotProps.item.recurring.days">
-              {{
-                recurringFormatter.getRDaysText(
-                  slotProps.item.recurring.unit,
-                  slotProps.item.recurring.days,
-                )
-              }}
-            </div>
-            <div>
-              {{
-                recurringFormatter.getRIntervalText(slotProps.item.recurring)
-              }}
-            </div>
-          </div>
-          <div v-else>{{ slotProps.item.from }} - {{ slotProps.item.to }}</div>
-        </div>
-      </template>
-    </OrderList>
-  </div>
-
-  <div v-else>
-    <h1 class="icon icon-spinner spin whole-screen"></h1>
+  <div class="w-100 position-relative">
+    <SelectButton
+      v-model="viewOption"
+      :options="schedulesViewOptions"
+      optionLabel="label"
+      optionValue="id"
+      class="mb-3 text-center"
+    />
+    <SchedulesRules v-if="viewOption === 'rules'"></SchedulesRules>
+    <SchedulesCalendar v-if="viewOption === 'calendar'"></SchedulesCalendar>
   </div>
 </template>
 
 <script lang="ts">
-import OrderList from 'primevue/orderlist';
+import SelectButton from 'primevue/selectbutton';
 import { defineComponent } from 'vue';
-import router from '../router';
-import bus from '../services/EventBus';
-import IdService from '../services/IdService';
-import { RecurringFormatterService } from '../services/RecurringFormatterService';
-import ScheduleService from '../services/ScheduleService';
-import { Schedule } from '../types';
+import SchedulesCalendar from './SchedulesCalendar.vue';
+import SchedulesRules from './SchedulesRules.vue';
 
 export default defineComponent({
   name: 'schedules',
-  components: { OrderList },
+  components: { SelectButton, SchedulesCalendar, SchedulesRules },
   data() {
     return {
-      _id: null as string | null,
-      recurringFormatter: new RecurringFormatterService(this.$t),
-      schedules: undefined as Schedule[] | undefined,
+      schedulesViewOptions: [
+        {
+          id: 'rules',
+          label: this.$t('schedules.viewOptions.rules'),
+        },
+        {
+          id: 'calendar',
+          label: this.$t('schedules.viewOptions.calendar'),
+        },
+      ],
+      viewOption: 'rules',
     };
   },
-  methods: {
-    getSchedules(id: string) {
-      ScheduleService.getSchedules(id, 'all')
-        .then((schedules: Schedule[]) => {
-          this.schedules = schedules;
-        })
-        .catch((e: Error) => {
-          bus.emit('toast', {
-            type: 'error',
-            message: this.$t('schedules.messages.error.schedules.message'),
-          });
-          console.log(e);
-        });
-    },
-    open(scheduleId: string) {
-      router.push({ name: 'schedule', params: { scheduleId } });
-    },
-  },
-  mounted() {
-    this._id = IdService.retrieveId();
-    if (this._id) {
-      this.getSchedules(this._id);
-    }
-  },
+  methods: {},
 });
 </script>
 
