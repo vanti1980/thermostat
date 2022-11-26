@@ -18,6 +18,7 @@ import { HttpException, HttpStatus } from '../shared/exceptions/http-exception';
 import { CyclicCollection, CyclicItem } from '../shared/types/cyclic-item';
 import { DbSchedule, fromDb, toDb } from '../shared/models/db/schedule';
 import { TStatus } from '../shared/types/status';
+import { ScheduleOrderRequest } from '../shared/models/schedule-order-request';
 
 type Unit = 'd' | 'w' | 'm';
 
@@ -36,7 +37,9 @@ export class ScheduleService {
   constructor() {}
 
   async getSchedule(scheduleId: string): Promise<Schedule> {
-    const schedule: CyclicItem<DbSchedule> = await db.collection(COLL_SCHEDULE).get(scheduleId);
+    const schedule: CyclicItem<DbSchedule> = await db
+      .collection(COLL_SCHEDULE)
+      .get(scheduleId);
     if (!schedule) {
       throw new HttpException(
         `Could not get schedule with ID ${scheduleId}`,
@@ -51,9 +54,26 @@ export class ScheduleService {
    * Handles when thermostat send a status.
    * @param id
    */
-  async getSchedules(id: string, status: TStatus = 'active'): Promise<Schedule[]> {
+  async getSchedules(
+    id: string,
+    status: TStatus = 'active',
+  ): Promise<Schedule[]> {
     const activeSchedules = await this.getSchedulesWithStatus(id, status, true);
     return activeSchedules;
+  }
+
+  async reorderSchedules(
+    id: string,
+    request: ScheduleOrderRequest[],
+  ): Promise<void> {
+    const schedules = await this.getAllSchedules(id);
+    const matchingReqs = schedules
+      .map((schedule) => request.find((req) => req.id === schedule.id))
+      .filter((req) => !!req)
+      .map((req) =>
+        db.collection(COLL_SCHEDULE).set(req.id, { priority: req.priority }),
+      );
+    await Promise.all(matchingReqs);
   }
 
   async createSchedule(
@@ -64,8 +84,8 @@ export class ScheduleService {
     const key = `${id}_${uuid()}`;
     const schedules = await this.getAllSchedules(id);
     const priority =
-      schedules.reduce((prev, curr) => Math.max(prev, curr.priority), 0) + 1;
-    await db.collection(COLL_SCHEDULE).set(key, toDb(request));
+      schedules.reduce((prev, curr) => Math.max(prev, curr.priority || 0), 0) + 1;
+    await db.collection(COLL_SCHEDULE).set(key, toDb({...request, priority}));
     return {
       ...request,
       id: key,
@@ -88,7 +108,9 @@ export class ScheduleService {
     request: Partial<Schedule>,
   ): Promise<Schedule> {
     // key: <ID>_<UUID>, value: {"from":"2022-10-03T10:00:00Z","priority":1,"set":19,"rUnit":"w","rDays":[0,1,2,3,4],"rFrom":"0700","rTo":"1700"} -> for recurring setting
-    const schedule: CyclicItem<DbSchedule> = await db.collection(COLL_SCHEDULE).get(scheduleId);
+    const schedule: CyclicItem<DbSchedule> = await db
+      .collection(COLL_SCHEDULE)
+      .get(scheduleId);
     if (!schedule) {
       throw new HttpException(
         `Could not find schedule with ID ${scheduleId}`,
@@ -111,7 +133,7 @@ export class ScheduleService {
     const schedules = (await Promise.all(
       briefSchedules.map((sch) => db.collection(COLL_SCHEDULE).get(sch.key)),
     )) as CyclicItem<DbSchedule>[];
-    schedules.sort((a, b) => a.props.priority - b.props.priority);
+    schedules.sort((a, b) => (b.props.priority || 0) - (a.props.priority || 0));
 
     return schedules.map(fromDb);
   }
@@ -124,48 +146,54 @@ export class ScheduleService {
    * @param cleanup If obsolete schedules should be cleaned up
    * @returns {Promise<Schedule[]>}
    */
-  private async getSchedulesWithStatus(id: string, status: TStatus, cleanup?: boolean): Promise<Schedule[]> {
+  private async getSchedulesWithStatus(
+    id: string,
+    status: TStatus,
+    cleanup?: boolean,
+  ): Promise<Schedule[]> {
     let schedules = await this.getAllSchedules(id);
     if (cleanup) {
       schedules = await this.deleteObsoleteSchedules(schedules);
     }
     const now = new Date();
-    return status === 'active' ? (schedules || [])
-      .filter(
-        (schedule) =>
-          (!schedule.from || !isAfter(parseISO(schedule.from), now)) &&
-          (!schedule.to || !isBefore(parseISO(schedule.to), now)),
-      )
-      .filter(
-        (schedule) =>
-          !schedule.recurring?.unit ||
-          this.recurringToday(
-            now,
-            parseISO(schedule.from),
-            schedule.recurring.unit,
-            schedule.recurring.count,
-            schedule.recurring.from,
-            schedule.recurring.to,
-          ) ||
-          this.recurringThisWeek(
-            now,
-            parseISO(schedule.from),
-            schedule.recurring.unit,
-            schedule.recurring.count,
-            schedule.recurring.days,
-            schedule.recurring.from,
-            schedule.recurring.to,
-          ) ||
-          this.recurringThisMonth(
-            now,
-            parseISO(schedule.from),
-            schedule.recurring.unit,
-            schedule.recurring.count,
-            schedule.recurring.days,
-            schedule.recurring.from,
-            schedule.recurring.to,
-          ),
-      ) : schedules;
+    return status === 'active'
+      ? (schedules || [])
+          .filter(
+            (schedule) =>
+              (!schedule.from || !isAfter(parseISO(schedule.from), now)) &&
+              (!schedule.to || !isBefore(parseISO(schedule.to), now)),
+          )
+          .filter(
+            (schedule) =>
+              !schedule.recurring?.unit ||
+              this.recurringToday(
+                now,
+                parseISO(schedule.from),
+                schedule.recurring.unit,
+                schedule.recurring.count,
+                schedule.recurring.from,
+                schedule.recurring.to,
+              ) ||
+              this.recurringThisWeek(
+                now,
+                parseISO(schedule.from),
+                schedule.recurring.unit,
+                schedule.recurring.count,
+                schedule.recurring.days,
+                schedule.recurring.from,
+                schedule.recurring.to,
+              ) ||
+              this.recurringThisMonth(
+                now,
+                parseISO(schedule.from),
+                schedule.recurring.unit,
+                schedule.recurring.count,
+                schedule.recurring.days,
+                schedule.recurring.from,
+                schedule.recurring.to,
+              ),
+          )
+      : schedules;
   }
 
   async deleteObsoleteSchedules(schedules: Schedule[]): Promise<Schedule[]> {

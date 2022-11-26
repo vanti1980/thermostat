@@ -6,6 +6,7 @@ import { HttpException, HttpStatus } from '../shared/exceptions/http-exception';
 import { Logger } from '../shared/logger';
 import { ScheduleService } from './schedule.service';
 import { handleError } from '../shared/functions/handle-error';
+import { ScheduleOrderRequest } from '../shared/models/schedule-order-request';
 
 export class ScheduleController {
   private readonly logger = new Logger(ScheduleController.name);
@@ -16,6 +17,7 @@ export class ScheduleController {
     private scheduleSvc: ScheduleService,
   ) {
     app.get('/api/schedule', this.getSchedules.bind(this));
+    app.patch('/api/schedule', this.reorderSchedules.bind(this));
     app.post('/api/schedule', this.createSchedule.bind(this));
     app.get('/api/schedule/:scheduleId', this.getSchedule.bind(this));
     app.delete('/api/schedule/:scheduleId', this.deleteSchedule.bind(this));
@@ -36,6 +38,17 @@ export class ScheduleController {
       .then(() => this.scheduleSvc.getSchedules(id, status))
       .then((schedules) => res.json(schedules).end())
       .catch(handleError(`Could not query schedules`, res, this.logger));
+  }
+
+  async reorderSchedules(req: Request, res: Response): Promise<Response> {
+    const id = req.headers.id as string;
+    const scheduleRequest: ScheduleOrderRequest[] = req.body;
+
+    return this.idSvc
+      .checkValidId(id)
+      .then(() => this.scheduleSvc.reorderSchedules(id, scheduleRequest))
+      .then(() => res.status(201).end())
+      .catch(handleError(`Could not reorder schedules`, res, this.logger));
   }
 
   async getSchedule(req: Request, res: Response): Promise<Response> {
