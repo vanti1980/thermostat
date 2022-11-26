@@ -1,5 +1,5 @@
-import { CyclicItem } from "../../types/cyclic-item";
-import { Schedule } from "../schedule";
+import { CyclicItem } from '../../types/cyclic-item';
+import { Schedule } from '../schedule';
 
 export interface DbSchedule {
   priority: number;
@@ -11,7 +11,6 @@ export interface DbSchedule {
   rDays: number[];
   rFrom: string;
   rTo: string;
-
 }
 
 export function fromDb(dbSchedule: CyclicItem<DbSchedule>): Schedule {
@@ -33,16 +32,35 @@ export function fromDb(dbSchedule: CyclicItem<DbSchedule>): Schedule {
   };
 }
 
-export function toDb(request: Partial<Schedule>): DbSchedule {
-  return {
-    from: request.from,
-    to: request.to,
-    priority: request.priority,
-    set: request.set,
-    rUnit: request.recurring?.unit,
-    rCount: request.recurring?.count,
-    rDays: request.recurring?.days,
-    rFrom: request.recurring?.from,
-    rTo: request.recurring?.to,
-  };
+export function toDb(request: Partial<Schedule>): Partial<DbSchedule> {
+  const res: Partial<DbSchedule> = {};
+  if (request.from) {
+    res.from = request.from;
+  }
+  if (request.to) {
+    res.to = request.to;
+  }
+  if (request.priority) {
+    res.priority = request.priority;
+  }
+  if (request.set) {
+    res.set = request.set;
+  }
+  if (request.recurring?.unit) {
+    res.rUnit = request.recurring?.unit;
+  }
+  if (request.recurring?.count) {
+    res.rCount = request.recurring?.count;
+  }
+  if (request.recurring?.days) {
+    res.rDays = request.recurring?.days;
+  }
+  if (request.recurring?.from) {
+    res.rFrom = request.recurring?.from;
+  }
+  if (request.recurring?.to) {
+    res.rTo = request.recurring?.to;
+  }
+
+  return res;
 }
