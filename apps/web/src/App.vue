@@ -62,7 +62,7 @@ export default defineComponent({
 });
 </script>
 <style>
-@import 'https://unpkg.com/primeflex@^3/primeflex.css';
+@import 'primeflex/primeflex.css';
 @import 'primevue/resources/themes/saga-blue/theme.css';
 @import 'primevue/resources/primevue.min.css';
 @import 'primeicons/primeicons.css';
