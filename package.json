@@ -4,7 +4,6 @@
   "description": "",
   "main": "dist/main.js",
   "scripts": {
-    "start": "npm run build:api && npm run start:api",
     "build": "npm run build:api && npm run build:web",
     "dev": "npm run start:api",
     "build:api": "npx tsc -p apps/api",
