@@ -2,7 +2,7 @@
   "name": "thermostat",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/main.js",
+  "main": "./dist/main.js",
   "scripts": {
     "prebuild": "rimraf dist/*",
     "build": "npm run build:api && npm run build:web",
