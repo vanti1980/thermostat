@@ -156,7 +156,7 @@ export class ScheduleService {
       schedules = await this.deleteObsoleteSchedules(schedules);
     }
     const now = new Date();
-    return status === 'active'
+    const filteredSchedules = status === 'active'
       ? (schedules || [])
           .filter(
             (schedule) =>
@@ -168,7 +168,7 @@ export class ScheduleService {
               !schedule.recurring?.unit ||
               this.recurringToday(
                 now,
-                parseISO(schedule.from),
+                schedule.from ? parseISO(schedule.from) : undefined,
                 schedule.recurring.unit,
                 schedule.recurring.count,
                 schedule.recurring.from,
@@ -176,7 +176,7 @@ export class ScheduleService {
               ) ||
               this.recurringThisWeek(
                 now,
-                parseISO(schedule.from),
+                schedule.from ? parseISO(schedule.from) : undefined,
                 schedule.recurring.unit,
                 schedule.recurring.count,
                 schedule.recurring.days,
@@ -185,7 +185,7 @@ export class ScheduleService {
               ) ||
               this.recurringThisMonth(
                 now,
-                parseISO(schedule.from),
+                schedule.from ? parseISO(schedule.from) : undefined,
                 schedule.recurring.unit,
                 schedule.recurring.count,
                 schedule.recurring.days,
@@ -194,6 +194,7 @@ export class ScheduleService {
               ),
           )
       : schedules;
+      return filteredSchedules.sort((sched1, sched2) => sched1.priority - sched2.priority);
   }
 
   async deleteObsoleteSchedules(schedules: Schedule[]): Promise<Schedule[]> {
@@ -259,7 +260,7 @@ export class ScheduleService {
   ): boolean {
     return (
       rUnit === 'd' &&
-      differenceInCalendarDays(now, from) % (rCount || 1) === 0 &&
+      (!from || differenceInCalendarDays(now, from) % (rCount || 1) === 0) &&
       this.inHourMinInterval(now, rFrom, rTo)
     );
   }
@@ -286,7 +287,7 @@ export class ScheduleService {
   ) {
     return (
       rUnit === 'w' &&
-      differenceInCalendarWeeks(now, from) % (rCount || 1) === 0 &&
+      (!from || differenceInCalendarWeeks(now, from) % (rCount || 1) === 0) &&
       (rDays || []).includes(getDay(now)) &&
       this.inHourMinInterval(now, rFrom, rTo)
     );
@@ -314,7 +315,7 @@ export class ScheduleService {
   ): boolean {
     return (
       rUnit === 'm' &&
-      differenceInCalendarMonths(now, from) % (rCount || 1) === 0 &&
+      (!from || differenceInCalendarMonths(now, from) % (rCount || 1) === 0) &&
       (rDays || []).includes(getDate(now)) &&
       this.inHourMinInterval(now, rFrom, rTo)
     );
