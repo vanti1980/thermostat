@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/main.js",
   "scripts": {
+    "prebuild": "rimraf dist/*",
     "build": "npm run build:api && npm run build:web",
     "dev": "npm run start:api",
     "build:api": "npx tsc -p apps/api",
