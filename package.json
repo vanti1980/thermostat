@@ -7,8 +7,8 @@
     "prebuild": "rimraf dist/*",
     "build": "npm run build:api && npm run build:web",
     "dev": "npm run start:api",
-    "build:api": "npx tsc -p apps/api",
-    "build:web": "vue-cli-service build apps/web/src/main.ts --dest dist/public",
+    "build:api": "npx tsc -p apps/api --verbose",
+    "build:web": "vue-cli-service build apps/web/src/main.ts --dest dist/public --verbose",
     "start:web": "vue-cli-service serve apps/web/src/main.ts",
     "start:api": "env-cmd node dist/main.js"
   },
