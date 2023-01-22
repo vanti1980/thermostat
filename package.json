@@ -2,7 +2,6 @@
   "name": "thermostat",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/main.js",
   "scripts": {
     "prebuild": "rimraf dist/*",
     "build": "npm run build:api && npm run build:web",
@@ -10,7 +9,7 @@
     "build:api": "npx tsc -p apps/api",
     "build:web": "vue-cli-service build apps/web/src/main.ts --dest dist/public",
     "start:web": "vue-cli-service serve apps/web/src/main.ts",
-    "start:api": "env-cmd node dist/main.js"
+    "start:api": "env-cmd node index.js"
   },
   "keywords": [],
   "dependencies": {
