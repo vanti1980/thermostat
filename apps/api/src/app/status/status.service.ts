@@ -4,6 +4,7 @@ import { format, formatISO, set, sub } from 'date-fns';
 import { ScheduleService } from '../schedule/schedule.service';
 import { HttpException, HttpStatus } from '../shared/exceptions/http-exception';
 import { Logger } from '../shared/logger';
+import { CyclicCollection, CyclicItem } from '../shared/types/cyclic-item';
 
 type Unit = 'd' | 'w' | 'm';
 
@@ -64,13 +65,14 @@ export class StatusService {
 
   async getStatuses(id: string, from?: string, to?: string): Promise<Status[]> {
     this.logger.debug(`getStatuses id=${id}, from=${from}, to=${to}`);
-    const briefStatusItems = await db.collection(COLL_STATUS).list();
+    const briefStatusItems: CyclicCollection<any> = await db.collection(COLL_STATUS).list();
     const statusItems = await Promise.all(
       briefStatusItems.results
         .filter((item) => item.key.startsWith(`${id}_`))
-        .map((item) => db.collection(COLL_STATUS).get(item.key))
+        .map((item) => db.collection(COLL_STATUS).get(item.key) as Status)
     );
-    return statusItems.map((item) => this.getStatusesFromItem(item)).flat();
+    return statusItems.map((item) => this.getStatusesFromItem(item)).flat()
+    .sort((item1, item2) => -item1.ts.localeCompare(item2.ts));
   }
 
   async postStatus(id: string, statusRequest: StatusRequest): Promise<Status> {
@@ -105,7 +107,8 @@ export class StatusService {
             ...this.getStatusValueKeyTimeSetProps(key),
           })
         ),
-      }));
+      }))
+      .sort((item1, item2) => item1.ts.localeCompare(item2.ts));
   }
 
   /**
