@@ -26,7 +26,7 @@ export class ScheduleController {
 
   async getSchedules(req: Request, res: Response): Promise<Response> {
     const id = req.headers.id as string;
-    const status = req.query.status as string;
+    const status = req.query.status as string || 'all';
     if (status !== 'active' && status !== 'all') {
       throw new HttpException(
         `Invalid status parameter. Allowed values: active | all`,
