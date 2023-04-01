@@ -19,6 +19,9 @@ global heater
 global infoPage
 
 CYCLE_REREAD_SERVER = 60
+THERMOSTAT_ID = 'THERMOSTAT_ID'
+WIFI_SSID = 'SSID'
+WIFI_PSK = 'PSK'
 
 heaterVal = 1
 infoPage = 0
@@ -51,7 +54,7 @@ def init_wlan():
 
         wlan = network.WLAN(network.STA_IF)
         wlan.active(True)
-        wlan.connect('DIGI_e7d738', 'ddcc1828')
+        wlan.connect(WIFI_SSID, WIFI_PSK)
 
         while not wlan.isconnected() and wlan.status() >= 0:
             print("Waiting to connect:")
@@ -72,15 +75,15 @@ def init_temp_sensor():
     try:
         display_msg("Temp sensor INIT")
         
-        # the DS18 device is on GPIO15
-        ow = machine.Pin(15)
+        # the DS18 device is on GPIO21 (Pin26)
+        ow = machine.Pin(21)
 
         # create the onewire object
         ds = ds18x20.DS18X20(onewire.OneWire(ow))
 
         # scan for 1W devices on the bus
         roms = ds.scan()
-        print('found devices:', roms)
+        print('found devices on PIN 26:', roms)
         addr=roms[0]
         print ("Address = " + str(addr))
         display_msg("Temp sensor OK")
@@ -96,7 +99,7 @@ def display_msg(msg, waitSec = 1):
     utime.sleep(waitSec)
 
 def display_error(msg):
-    display_msg(10)
+    display_msg(msg)
 
 def display_status(msg, waitSec = 0):
     Writer.set_textpos(oled, 50, 0)  # verbose = False to suppress console output
@@ -133,7 +136,7 @@ def post_status(temp):
     postStatusRequest = ujson.dumps({"temp": temp});
     print(postStatusRequest)
     try:
-        res = urequests.post("https://thermo.cyclic.app/api/status", headers = {'content-type': 'application/json', 'id': 'nwTKGCZVEMJCq_TIjlvjf8zJ7yFOAOEga3xnPeitsVc'}, data = postStatusRequest)
+        res = urequests.post("https://thermo.cyclic.app/api/status", headers = {'content-type': 'application/json', 'id': THERMOSTAT_ID}, data = postStatusRequest)
         print(res.text)
         status = res.json()
         res.close()

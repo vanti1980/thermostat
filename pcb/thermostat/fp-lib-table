@@ -1,0 +1,11 @@
+(fp_lib_table
+  (lib (name "SSD1306")(type "KiCad")(uri "$(KICAD_LIB_HOME)/KiCad-SSD1306-128x64/library/SSD1306.pretty")(options "")(descr ""))
+  (lib (name "DS18B20")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/DS18B20")(options "")(descr ""))
+  (lib (name "srd-05vdc-sl-c")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/srd-05vdc-sl-c")(options "")(descr ""))
+  (lib (name "1N4148")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/1N4148")(options "")(descr ""))
+  (lib (name "2N4401")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/2N4401")(options "")(descr ""))
+  (lib (name "LTV-817")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/LTV-817")(options "")(descr ""))
+  (lib (name "PCB-TB-3")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/PCB-TB-3.5-P-3P")(options "")(descr ""))
+  (lib (name "RPi_Pico")(type "KiCad")(uri "$(KICAD_LIB_HOME)/RPi_Pico.pretty")(options "")(descr ""))
+  (lib (name "MICROUSB-DIP5")(type "KiCad")(uri "$(KICAD_LIB_HOME)/microusb-dip5.pretty")(options "")(descr ""))
+)

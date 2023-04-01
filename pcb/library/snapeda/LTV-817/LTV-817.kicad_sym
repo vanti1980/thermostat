@@ -1,0 +1,177 @@
+
+(kicad_symbol_lib (version 20211014) (generator kicad_symbol_editor)
+  (symbol "LTV-817" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (property "Reference" "IC" (id 0) (at 2.0 3.0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom left))
+    )
+    (property "Value" "LTV-817" (id 1) (at 0 0.0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom))
+    )
+    (property "DIGIKEY" "160-1367-5-ND" (id 4) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (symbol "LTV-817_0_0"
+      (polyline
+        (pts (xy 5.587 -4.143) (xy 6.984 -2.746)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 6.984 -2.746) (xy 6.095 -3.127)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 6.095 -3.127) (xy 6.603 -3.635)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 6.603 -3.635) (xy 6.984 -2.746)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 6.857 -1.603) (xy 5.968 -1.984)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 5.968 -1.984) (xy 6.476 -2.492)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 6.476 -2.492) (xy 6.857 -1.603)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 5.46 -3.0) (xy 6.476 -1.984)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 6.476 -1.984) (xy 6.857 -1.603)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 5.0 -4.0) (xy 4.0 -4.0)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 4.0 -4.0) (xy 3.0 -4.0)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 4.0 0.0) (xy 2.0 0.0)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 4.0 -6.0) (xy 2.0 -6.0)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 11.0 0.0) (xy 8.0 -3.0)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 11.0 -6.0) (xy 14.0 -6.0)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 11.0 0.0) (xy 14.0 0.0)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 8.0 -3.0) (xy 9.4 -4.4)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 10.0 -5.0) (xy 11.0 -6.0)) (stroke (width 0.1524))
+      )
+      (polyline
+        (pts (xy 6.476 -1.984) (xy 6.476 -2.238)) (stroke (width 0.3048))
+      )
+      (polyline
+        (pts (xy 6.222 -1.984) (xy 6.476 -1.984)) (stroke (width 0.3048))
+      )
+      (polyline
+        (pts (xy 6.3998 -3.127) (xy 6.6792 -3.127)) (stroke (width 0.3048))
+      )
+      (polyline
+        (pts (xy 6.5522 -3.1524) (xy 6.5522 -3.4064)) (stroke (width 0.3048))
+      )
+      (polyline
+        (pts (xy 6.2474 -3.1524) (xy 6.3998 -3.1524)) (stroke (width 0.3048))
+      )
+      (polyline
+        (pts (xy 6.5268 -1.857) (xy 6.603 -1.857)) (stroke (width 0.3048))
+      )
+      (polyline
+        (pts (xy 6.603 -1.857) (xy 6.603 -1.9078)) (stroke (width 0.3048))
+      )
+      (circle (center 3.75 1.25) (radius 0.175)
+        (stroke (width 0.3048)) (fill (type none))
+      )
+      (rectangle (start 7.5 -6.0) (end 8.5 0.0)
+        (stroke (width 0.1)) (fill (type outline))
+      )
+      (polyline
+        (pts (xy 10.0 -5.0) (xy 9.7 -3.8)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 9.7 -3.8) (xy 8.8 -4.7)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 8.8 -4.7) (xy 10.0 -5.0)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 10.0 -5.0) (xy 9.4 -4.4)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 9.2 -4.6) (xy 9.6 -4.2)) (stroke (width 0.6096))
+      )
+      (polyline
+        (pts (xy 9.6 -4.2) (xy 9.7 -4.6)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 9.7 -4.6) (xy 9.3 -4.7)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 4.0 0.0) (xy 4.0 -3.9)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 4.0 -3.9) (xy 4.0 -4.0)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 4.0 -4.0) (xy 4.0 -6.0)) (stroke (width 0.254))
+      )
+      (polyline
+        (pts (xy 4.0 -4.0) (xy 3.0 -2.5)) (stroke (width 0.4064))
+      )
+      (polyline
+        (pts (xy 3.0 -2.5) (xy 5.0 -2.5)) (stroke (width 0.4064))
+      )
+      (polyline
+        (pts (xy 5.0 -2.5) (xy 4.0 -3.9)) (stroke (width 0.4064))
+      )
+      (polyline
+        (pts (xy 3.5 -2.8) (xy 4.5 -2.8)) (stroke (width 0.6096))
+      )
+      (circle (center 4.0 -3.1) (radius 0.141419)
+        (stroke (width 0.6096)) (fill (type none))
+      )
+      (rectangle (start 2.0 -8.0) (end 14.0 2.0)
+        (stroke (width 0.4064)) (fill (type background))
+      )
+      (pin input line (at 0.0 0.0 0) (length 2.54)
+        (name "~"
+          (effects (font (size 1.016 1.016)))
+        )
+        (number "1"
+          (effects (font (size 1.016 1.016)))
+        )
+      )
+      (pin output line (at 0.0 -6.0 0) (length 2.54)
+        (name "~"
+          (effects (font (size 1.016 1.016)))
+        )
+        (number "2"
+          (effects (font (size 1.016 1.016)))
+        )
+      )
+      (pin output line (at 16.0 -6.0 180.0) (length 2.54)
+        (name "~"
+          (effects (font (size 1.016 1.016)))
+        )
+        (number "3"
+          (effects (font (size 1.016 1.016)))
+        )
+      )
+      (pin input line (at 16.0 0.0 180.0) (length 2.54)
+        (name "~"
+          (effects (font (size 1.016 1.016)))
+        )
+        (number "4"
+          (effects (font (size 1.016 1.016)))
+        )
+      )
+    )
+  )
+)

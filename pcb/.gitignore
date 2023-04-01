@@ -1,0 +1,6 @@
+*auto_saved_files*
+*cache
+thermostat-backups
+library/*
+!library/snapeda
+!library/README

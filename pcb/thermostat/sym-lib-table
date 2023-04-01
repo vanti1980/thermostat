@@ -1,0 +1,9 @@
+(sym_lib_table
+  (lib (name "SRD-05VDC-SL-C")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/srd-05vdc-sl-c/SRD-05VDC-SL-C.kicad_sym")(options "")(descr ""))
+  (lib (name "SSD1306-128x64_OLED")(type "Legacy")(uri "$(KICAD_LIB_HOME)/KiCad-SSD1306-128x64/library/SSD1306-128x64_OLED.lib")(options "")(descr ""))
+  (lib (name "DS18B20")(type "KiCad")(uri "C:/dev/thermostat/pcb/library/snapeda/DS18B20/DS18B20_PAR.kicad_sym")(options "")(descr ""))
+  (lib (name "LTV-817")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/LTV-817/LTV-817.kicad_sym")(options "")(descr ""))
+  (lib (name "1N4148")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/1N4148/1N4148.kicad_sym")(options "")(descr ""))
+  (lib (name "2N4401")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/2N4401/2N4401.kicad_sym")(options "")(descr ""))
+  (lib (name "691214110003")(type "KiCad")(uri "$(KICAD_LIB_HOME)/snapeda/PCB-TB-3.5-P-3P/691214110003.kicad_sym")(options "")(descr ""))
+)
