@@ -170,7 +170,7 @@ def update_heater(tnow, tset):
     if tnow < (tset - HYSTERESIS):
         heater.value(0)
         return 1
-    return heater.value()
+    return 0 if heater.value() else 1
 
 
 init_oled()
